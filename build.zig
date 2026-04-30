@@ -66,6 +66,16 @@ pub fn build(b: *std.Build) void {
     });
     if (android_libc_file) |path| compile.setLibCFile(path);
 
+    // macOS cross-compile from non-Darwin hosts: the final link needs
+    // -L $SDKROOT/usr/lib so transitive system libraries (e.g. -lobjc from
+    // glfw) resolve. Native macOS builds rely on Zig's xcrun auto-detection.
+    if (target.result.os.tag.isDarwin() and !b.graph.host.result.os.tag.isDarwin()) {
+        if (b.graph.environ_map.get("SDKROOT")) |sdk_root| {
+            root_module.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/usr/lib", .{sdk_root}) });
+            root_module.addFrameworkPath(.{ .cwd_relative = b.fmt("{s}/System/Library/Frameworks", .{sdk_root}) });
+        }
+    }
+
     // Compile GLSL → SPIR-V at build time so the same source builds for every
     // host without bundling a precompiled binary.
     const vert_cmd = b.addSystemCommand(&.{
