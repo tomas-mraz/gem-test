@@ -15,7 +15,7 @@ All artifacts land in `./build/`.
 | Android (arm64-v8a)  | `make build-android` (debug APK) / `make build-android-release` (AAB) / `make sign-android-release` (signed AAB) | `build/gem-test-android-arm64-dev.apk` / `build/gem-test-android.aab` / `build/gem-test-android-signed.aab` |
 | Windows amd64        | `make build-windows`     | `build/gem-test-win-amd64.exe`            |
 | Windows arm64        | `make build-windows-arm64` | `build/gem-test-win-arm64.exe`          |
-| macOS arm64          | `make build-macos`       | `build/gem-test-macos-arm64`              |
+| macOS arm64          | `make build-macos` / `make build-macos-app` / `make build-macos-dmg` | `build/gem-test-macos-arm64` / `build/gem-test-macos-arm64-dev.app` / `build/gem-test-macos-arm64-dev.dmg` |
 
 `*-release` variants build with `-Doptimize=ReleaseSafe`. `make build-all` /
 `make build-all-release` build every platform in one go.
@@ -102,6 +102,23 @@ automatically via `xcrun` and ignore `SDKROOT`.
 At runtime the binary loads the system Vulkan loader, which in turn loads the
 Vulkan ICD configured on the host (e.g. Mesa's KosmicKrisp). MoltenVK is not
 bundled.
+
+Additional packaging targets:
+
+- `make build-macos-app` / `make build-macos-app-release` create a minimal
+  `.app` bundle around the compiled executable.
+- `make sign-macos-app` / `make sign-macos-app-release` copy that `.app`
+  bundle to a `-signed.app` artifact and sign the bundle with `codesign`.
+- `make build-macos-dmg` / `make build-macos-dmg-release` wrap the `.app`
+  bundle into a `.dmg` file from the corresponding `-signed.app` artifact.
+  These targets require macOS because they call `hdiutil`.
+
+Override these variables if needed:
+
+- `MACOS_APP_DISPLAY_NAME` for the Finder-visible app name and DMG volume name
+- `MACOS_BUNDLE_ID` for the bundle identifier written into `Info.plist`
+- `MACOS_CODESIGN_IDENTITY` for the signing identity passed to `codesign`
+- `MACOS_CODESIGN` to override the `codesign` executable path
 
 ### Windows
 
