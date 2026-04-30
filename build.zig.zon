@@ -1,0 +1,22 @@
+.{
+    .name = .gem_test,
+    .fingerprint = 0x9190f00713b4792a,
+    .version = "0.0.0",
+    .minimum_zig_version = "0.17.0-dev.56+a8226cd53",
+    .dependencies = .{
+        .vulkan_ash = .{
+            .path = "../vulkan-ash",
+        },
+        .gem = .{
+            .path = "../gem",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "resources",
+        "README.md",
+        "LICENSE",
+    },
+}
