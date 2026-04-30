@@ -12,7 +12,7 @@ All artifacts land in `./build/`.
 |----------------------|--------------------------|-------------------------------------------|
 | Linux amd64 (host)   | `make build-linux`       | `build/gem-test-linux-amd64`              |
 | Linux arm64          | `make build-linux-arm64` | `build/gem-test-linux-arm64`              |
-| Android (arm64-v8a)  | `make build-android`     | `build/gem-test-arm64-debug.apk`          |
+| Android (arm64-v8a)  | `make build-android` (debug APK) / `make build-android-release` (AAB) / `make sign-android-release` (signed AAB) | `build/gem-test-android-arm64-dev.apk` / `build/gem-test-android.aab` / `build/gem-test-android-signed.aab` |
 | Windows amd64        | `make build-windows`     | `build/gem-test-win-amd64.exe`            |
 | Windows arm64        | `make build-windows-arm64` | `build/gem-test-win-arm64.exe`          |
 | macOS arm64          | `make build-macos`       | `build/gem-test-macos-arm64`              |
@@ -44,9 +44,46 @@ matter if a library starts being linked at build time.
 ### Android
 
 The Android build compiles a shared library through Zig, drops it into
-`android/app/src/main/jniLibs/<abi>/`, then runs Gradle to package the APK.
+`android/app/src/main/jniLibs/<abi>/`, then runs Gradle to package the
+artifact:
+
+- `make build-android` → debug APK (`assembleDebug`) for sideloading
+- `make build-android-release` → release AAB (`bundleRelease`) for Play Store
+- `make sign-android-release` → signed release AAB via `jarsigner`
+
+Signing requires these environment variables:
+
+- `ANDROID_KEYSTORE`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_PASSWORD`
+
+For GitLab CI, set `ANDROID_KEYSTORE` as a `File` type CI/CD variable whose
+content is the `.jks`/`.keystore` file. GitLab then exposes the temporary file
+path in `$ANDROID_KEYSTORE`, which works directly with `make sign-android-release`.
+
 Override `ANDROID_TARGET` / `ANDROID_ABI` to build for an architecture other
 than `aarch64-linux-android` / `arm64-v8a`.
+
+### GitLab CI
+
+The repository includes [.gitlab-ci.yml](/home/tomas/git-osobni-github/gem-test/.gitlab-ci.yml),
+which publishes a signed Android AAB on tag pipelines.
+
+Required GitLab CI/CD variables:
+
+- `ANDROID_KEYSTORE` (`File` type)
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_PASSWORD`
+
+Mark the signing variables as `Protected`; keep the password variables masked,
+and run releases from protected tags.
+
+The job produces these artifacts:
+
+- `build/gem-test-android.aab`
+- `build/gem-test-android-signed.aab`
 
 ### macOS
 
@@ -74,3 +111,6 @@ targets ARM64. No additional setup beyond `VULKAN_SDK` is required.
 ### Cleaning
 
 Per-target clean rules: `clean-linux`, `clean-android`, `clean-windows`, `clean-macos`.
+
+# Related sources
+- https://developer.android.com/studio/publish/app-signing#register_upload_key
