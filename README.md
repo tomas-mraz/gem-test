@@ -11,16 +11,27 @@ All artifacts land in `./build/`.
 | Target               | Make target              | Output                                    |
 |----------------------|--------------------------|-------------------------------------------|
 | Linux amd64 (host)   | `make build-linux`       | `build/gem-test-linux-amd64`              |
-| Linux arm64          | `make build-linux-arm64` | `build/gem-test-linux-arm64` (needs sysroot) |
+| Linux arm64          | `make build-linux-arm64` | `build/gem-test-linux-arm64`              |
 | Android (arm64-v8a)  | `make build-android`     | `build/gem-test-arm64-debug.apk`          |
 | Windows amd64        | `make build-windows`     | `build/gem-test-win-amd64.exe`            |
 | Windows arm64        | `make build-windows-arm64` | `build/gem-test-win-arm64.exe`          |
 | macOS arm64          | `make build-macos`       | `build/gem-test-macos-arm64`              |
 
 `*-release` variants build with `-Doptimize=ReleaseSafe`. `make build-all` /
-`make build-all-release` build every platform in one go (Linux arm64 is
-excluded — it needs an aarch64-linux sysroot with Wayland/X11 headers, which
-the Makefile does not provision).
+`make build-all-release` build every platform in one go.
+
+Linux arm64 cross-compile only needs the regular (amd64) `-dev` packages on
+the build host:
+
+```sh
+sudo apt install libwayland-dev libxkbcommon-dev libvulkan-dev \
+                 libegl-dev libc6-dev glslang-tools
+```
+
+Those headers are arch-neutral, and Zig ships its own glibc for cross builds.
+GLFW resolves Wayland/Vulkan/EGL via `dlopen` at runtime, so no aarch64 `.so`
+files are needed at build time. Multi-arch (`:arm64` variants) would only
+matter if a library starts being linked at build time.
 
 ### Required environment variables
 
@@ -62,5 +73,4 @@ targets ARM64. No additional setup beyond `VULKAN_SDK` is required.
 
 ### Cleaning
 
-Per-target clean rules: `clean`, `clean-android`, `clean-windows`,
-`clean-macos`.
+Per-target clean rules: `clean-linux`, `clean-android`, `clean-windows`, `clean-macos`.

@@ -27,11 +27,9 @@ MACOS_TARGET ?= aarch64-macos-none
         build-macos build-macos-release clean-macos \
         build-all build-all-release
 
-# build-linux-arm64 is omitted: it needs an aarch64-linux sysroot with
-# Wayland/X11 headers, which the Makefile does not provision.
-build-all: build-linux build-android build-windows build-windows-arm64 build-macos
+build-all: build-linux build-linux-arm64 build-android build-windows build-windows-arm64 build-macos
 
-build-all-release: build-linux-release build-android-release build-windows-release build-windows-arm64-release build-macos-release
+build-all-release: build-linux-release build-linux-arm64-release build-android-release build-windows-release build-windows-arm64-release build-macos-release
 
 run:
 	zig build run
@@ -41,7 +39,7 @@ ensure-build-dir:
 
 build-linux: | ensure-build-dir
 	zig build
-	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-linux-amd64
+	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-linux-amd64-dev
 
 build-linux-release: | ensure-build-dir
 	zig build -Doptimize=ReleaseSafe
@@ -49,36 +47,37 @@ build-linux-release: | ensure-build-dir
 
 build-linux-arm64: | ensure-build-dir
 	zig build -Dtarget=$(LINUX_ARM64_TARGET)
-	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-linux-arm64
+	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-linux-arm64-dev
 
 build-linux-arm64-release: | ensure-build-dir
 	zig build -Dtarget=$(LINUX_ARM64_TARGET) -Doptimize=ReleaseSafe
 	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-linux-arm64
 
 clean-linux:
-	rm -f $(BUILD_DIR)/$(APP)-linux-amd64 $(BUILD_DIR)/$(APP)-linux-arm64
+	rm -f $(BUILD_DIR)/$(APP)-linux-amd64 $(BUILD_DIR)/$(APP)-linux-amd64-dev \
+	      $(BUILD_DIR)/$(APP)-linux-arm64 $(BUILD_DIR)/$(APP)-linux-arm64-dev
 
 build-android: | ensure-build-dir
 	zig build -Dtarget=$(ANDROID_TARGET)
 	mkdir -p $(ANDROID_JNILIBS)
 	mv zig-out/lib/lib$(APP).so $(ANDROID_JNILIBS)/
 	cd $(ANDROID_DIR) && ./gradlew assembleDebug
-	mv $(ANDROID_APK_DEBUG) $(BUILD_DIR)/$(APP)-arm64-debug.apk
+	mv $(ANDROID_APK_DEBUG) $(BUILD_DIR)/$(APP)-android-arm64-dev.apk
 
 build-android-release: | ensure-build-dir
 	zig build -Dtarget=$(ANDROID_TARGET) -Doptimize=ReleaseSafe
 	mkdir -p $(ANDROID_JNILIBS)
 	mv zig-out/lib/lib$(APP).so $(ANDROID_JNILIBS)/
 	cd $(ANDROID_DIR) && ./gradlew assembleRelease
-	mv $(ANDROID_APK_RELEASE) $(BUILD_DIR)/$(APP)-arm64-release-unsigned.apk
+	mv $(ANDROID_APK_RELEASE) $(BUILD_DIR)/$(APP)-android-arm64.apk
 
 clean-android:
 	rm -rf $(ANDROID_DIR)/app/build $(ANDROID_DIR)/app/src/main/jniLibs
-	rm -f $(BUILD_DIR)/$(APP)-arm64-debug.apk $(BUILD_DIR)/$(APP)-arm64-release-unsigned.apk
+	rm -f $(BUILD_DIR)/$(APP)-arm64-dev.apk $(BUILD_DIR)/$(APP)-arm64.apk
 
 build-windows: | ensure-build-dir
 	zig build -Dtarget=$(WINDOWS_TARGET)
-	mv zig-out/bin/$(APP).exe $(BUILD_DIR)/$(APP)-win-amd64.exe
+	mv zig-out/bin/$(APP).exe $(BUILD_DIR)/$(APP)-win-amd64-dev.exe
 
 build-windows-release: | ensure-build-dir
 	zig build -Dtarget=$(WINDOWS_TARGET) -Doptimize=ReleaseSafe
@@ -86,7 +85,7 @@ build-windows-release: | ensure-build-dir
 
 build-windows-arm64: | ensure-build-dir
 	zig build -Dtarget=$(WINDOWS_ARM64_TARGET)
-	mv zig-out/bin/$(APP).exe $(BUILD_DIR)/$(APP)-win-arm64.exe
+	mv zig-out/bin/$(APP).exe $(BUILD_DIR)/$(APP)-win-arm64-dev.exe
 
 build-windows-arm64-release: | ensure-build-dir
 	zig build -Dtarget=$(WINDOWS_ARM64_TARGET) -Doptimize=ReleaseSafe
@@ -94,15 +93,17 @@ build-windows-arm64-release: | ensure-build-dir
 
 clean-windows:
 	rm -f $(BUILD_DIR)/$(APP)-win-amd64.exe $(BUILD_DIR)/$(APP)-win-amd64.pdb \
-	      $(BUILD_DIR)/$(APP)-win-arm64.exe $(BUILD_DIR)/$(APP)-win-arm64.pdb
+	      $(BUILD_DIR)/$(APP)-win-amd64-dev.exe $(BUILD_DIR)/$(APP)-win-amd64-dev.pdb \
+	      $(BUILD_DIR)/$(APP)-win-arm64.exe $(BUILD_DIR)/$(APP)-win-arm64.pdb \
+	      $(BUILD_DIR)/$(APP)-win-arm64-dev.exe $(BUILD_DIR)/$(APP)-win-arm64-dev.pdb
 
 build-macos: | ensure-build-dir
 	zig build -Dtarget=$(MACOS_TARGET)
-	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-macos-arm64
+	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-macos-arm64-dev
 
 build-macos-release: | ensure-build-dir
 	zig build -Dtarget=$(MACOS_TARGET) -Doptimize=ReleaseSafe
 	mv zig-out/bin/$(APP) $(BUILD_DIR)/$(APP)-macos-arm64
 
 clean-macos:
-	rm -f $(BUILD_DIR)/$(APP)-macos-arm64
+	rm -f $(BUILD_DIR)/$(APP)-macos-arm64 $(BUILD_DIR)/$(APP)-macos-arm64-dev
