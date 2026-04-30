@@ -3,6 +3,10 @@ const gem = @import("gem");
 const ash = @import("ash");
 const vk = ash.vk;
 
+const vert_spv align(@alignOf(u32)) = @embedFile("vertex_shader").*;
+const frag_spv align(@alignOf(u32)) = @embedFile("fragment_shader").*;
+const vertices_json = @embedFile("triangle_vertices");
+
 pub const TriangleInstance = extern struct {
     angle: f32,
     offset_x: f32,
@@ -42,8 +46,6 @@ pub const TriangleRenderer = struct {
     framebuffers: []vk.Framebuffer = &.{},
 
     vertices: []f32 = &.{},
-    vert_shader_code: []u8 = &.{},
-    frag_shader_code: []u8 = &.{},
     instances: std.ArrayList(TriangleInstance) = .empty,
 
     once_built: bool = false,
@@ -56,14 +58,12 @@ pub const TriangleRenderer = struct {
     pub fn deinit(self: *TriangleRenderer) void {
         self.instances.deinit(self.allocator);
         if (self.vertices.len != 0) self.allocator.free(self.vertices);
-        if (self.vert_shader_code.len != 0) self.allocator.free(self.vert_shader_code);
-        if (self.frag_shader_code.len != 0) self.allocator.free(self.frag_shader_code);
     }
 
-    pub fn loadResources(self: *TriangleRenderer, resources: *gem.ResourceManager) !void {
-        self.vertices = try resources.loadFloat32Slice("geometry/triangle.vertices.json");
-        self.vert_shader_code = try resources.loadBytes("shaders/triangle.vert.spv");
-        self.frag_shader_code = try resources.loadBytes("shaders/triangle.frag.spv");
+    pub fn loadResources(self: *TriangleRenderer) !void {
+        const parsed = try std.json.parseFromSlice([]f32, self.allocator, vertices_json, .{});
+        defer parsed.deinit();
+        self.vertices = try self.allocator.dupe(f32, parsed.value);
     }
 
     pub fn reset(self: *TriangleRenderer) void {
@@ -116,8 +116,8 @@ pub const TriangleRenderer = struct {
             device,
             self.pipeline_layout,
             self.render_pass,
-            self.vert_shader_code,
-            self.frag_shader_code,
+            &vert_spv,
+            &frag_spv,
         );
         errdefer device.destroyPipeline(self.pipeline, null);
 

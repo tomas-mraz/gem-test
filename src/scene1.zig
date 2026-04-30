@@ -146,7 +146,8 @@ pub const Scene1 = struct {
     // -- gem.Scene methods ----------------------------------------------------
 
     pub fn load(self: *Scene1, e: *gem.Engine) !void {
-        try self.renderer.loadResources(&e.resources);
+        _ = e;
+        try self.renderer.loadResources();
         try self.resetWorld();
         try self.syncRenderer();
     }

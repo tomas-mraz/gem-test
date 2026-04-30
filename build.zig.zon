@@ -16,6 +16,8 @@
         "build.zig.zon",
         "src",
         "resources",
+        "android",
+        "Makefile",
         "README.md",
         "LICENSE",
     },
