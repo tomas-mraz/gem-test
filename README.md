@@ -106,17 +106,24 @@ bundled.
 Additional packaging targets:
 
 - `make build-macos-app` / `make build-macos-app-release` create a minimal
-  `.app` bundle around the compiled executable.
+  `.app` bundle around the compiled executable. The bundle uses
+  `assets/macos/app-icon.png` as the source icon asset.
 - `make sign-macos-app` / `make sign-macos-app-release` copy that `.app`
   bundle to a `-signed.app` artifact and sign the bundle with `codesign`.
 - `make build-macos-dmg` / `make build-macos-dmg-release` wrap the `.app`
   bundle into a `.dmg` file from the corresponding `-signed.app` artifact.
   These targets require macOS because they call `hdiutil`.
 
+When `build-macos-app*` runs on macOS, it also converts the PNG source icon
+into `AppIcon.icns` with `sips` and `iconutil` and places it under
+`Contents/Resources/`.
+
 Override these variables if needed:
 
 - `MACOS_APP_DISPLAY_NAME` for the Finder-visible app name and DMG volume name
 - `MACOS_BUNDLE_ID` for the bundle identifier written into `Info.plist`
+- `MACOS_APP_ICON_PNG` for the source PNG used to generate the macOS app icon
+- `MACOS_APP_ICON_NAME` for the icon file name recorded in `Info.plist`
 - `MACOS_CODESIGN_IDENTITY` for the signing identity passed to `codesign`
 - `MACOS_CODESIGN` to override the `codesign` executable path
 

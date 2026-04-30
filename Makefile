@@ -2,6 +2,8 @@ APP = gem-test
 BUILD_DIR = build
 MACOS_APP_DISPLAY_NAME ?= Gem Test
 MACOS_BUNDLE_ID ?= com.example.gemtest
+MACOS_APP_ICON_PNG ?= assets/macos/app-icon.png
+MACOS_APP_ICON_NAME ?= AppIcon
 MACOS_CODESIGN ?= codesign
 MACOS_CODESIGN_IDENTITY ?=
 
@@ -131,7 +133,8 @@ build-macos-release: | ensure-build-dir
 
 build-macos-app: build-macos | ensure-build-dir
 	rm -rf "$(MACOS_APP_DEV)"
-	mkdir -p "$(MACOS_APP_DEV)/Contents/MacOS"
+	mkdir -p "$(MACOS_APP_DEV)/Contents/MacOS" "$(MACOS_APP_DEV)/Contents/Resources"
+	@test -f "$(MACOS_APP_ICON_PNG)" || (echo "MACOS_APP_ICON_PNG not found: $(MACOS_APP_ICON_PNG)"; exit 1)
 	printf '%s\n' \
 		'<?xml version="1.0" encoding="UTF-8"?>' \
 		'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
@@ -143,6 +146,8 @@ build-macos-app: build-macos | ensure-build-dir
 		'  <string>$(MACOS_APP_DISPLAY_NAME)</string>' \
 		'  <key>CFBundleExecutable</key>' \
 		'  <string>$(APP)</string>' \
+		'  <key>CFBundleIconFile</key>' \
+		'  <string>$(MACOS_APP_ICON_NAME)</string>' \
 		'  <key>CFBundleIdentifier</key>' \
 		'  <string>$(MACOS_BUNDLE_ID)</string>' \
 		'  <key>CFBundleInfoDictionaryVersion</key>' \
@@ -163,10 +168,29 @@ build-macos-app: build-macos | ensure-build-dir
 		'</plist>' > "$(MACOS_APP_DEV)/Contents/Info.plist"
 	cp "$(BUILD_DIR)/$(APP)-macos-arm64-dev" "$(MACOS_APP_DEV)/Contents/MacOS/$(APP)"
 	chmod +x "$(MACOS_APP_DEV)/Contents/MacOS/$(APP)"
+	cp "$(MACOS_APP_ICON_PNG)" "$(MACOS_APP_DEV)/Contents/Resources/$(notdir $(MACOS_APP_ICON_PNG))"
+	@if [ "$$(uname -s)" = Darwin ]; then \
+		iconset_dir="$(MACOS_APP_DEV)/Contents/Resources/$(MACOS_APP_ICON_NAME).iconset"; \
+		rm -rf "$$iconset_dir"; \
+		mkdir -p "$$iconset_dir"; \
+		sips -z 16 16 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_16x16.png" >/dev/null; \
+		sips -z 32 32 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_16x16@2x.png" >/dev/null; \
+		sips -z 32 32 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_32x32.png" >/dev/null; \
+		sips -z 64 64 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_32x32@2x.png" >/dev/null; \
+		sips -z 128 128 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_128x128.png" >/dev/null; \
+		sips -z 256 256 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_128x128@2x.png" >/dev/null; \
+		sips -z 256 256 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_256x256.png" >/dev/null; \
+		sips -z 512 512 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_256x256@2x.png" >/dev/null; \
+		sips -z 512 512 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_512x512.png" >/dev/null; \
+		sips -z 1024 1024 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_512x512@2x.png" >/dev/null; \
+		iconutil -c icns "$$iconset_dir" -o "$(MACOS_APP_DEV)/Contents/Resources/$(MACOS_APP_ICON_NAME).icns"; \
+		rm -rf "$$iconset_dir"; \
+	fi
 
 build-macos-app-release: build-macos-release | ensure-build-dir
 	rm -rf "$(MACOS_APP_RELEASE)"
-	mkdir -p "$(MACOS_APP_RELEASE)/Contents/MacOS"
+	mkdir -p "$(MACOS_APP_RELEASE)/Contents/MacOS" "$(MACOS_APP_RELEASE)/Contents/Resources"
+	@test -f "$(MACOS_APP_ICON_PNG)" || (echo "MACOS_APP_ICON_PNG not found: $(MACOS_APP_ICON_PNG)"; exit 1)
 	printf '%s\n' \
 		'<?xml version="1.0" encoding="UTF-8"?>' \
 		'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
@@ -178,6 +202,8 @@ build-macos-app-release: build-macos-release | ensure-build-dir
 		'  <string>$(MACOS_APP_DISPLAY_NAME)</string>' \
 		'  <key>CFBundleExecutable</key>' \
 		'  <string>$(APP)</string>' \
+		'  <key>CFBundleIconFile</key>' \
+		'  <string>$(MACOS_APP_ICON_NAME)</string>' \
 		'  <key>CFBundleIdentifier</key>' \
 		'  <string>$(MACOS_BUNDLE_ID)</string>' \
 		'  <key>CFBundleInfoDictionaryVersion</key>' \
@@ -198,6 +224,24 @@ build-macos-app-release: build-macos-release | ensure-build-dir
 		'</plist>' > "$(MACOS_APP_RELEASE)/Contents/Info.plist"
 	cp "$(BUILD_DIR)/$(APP)-macos-arm64" "$(MACOS_APP_RELEASE)/Contents/MacOS/$(APP)"
 	chmod +x "$(MACOS_APP_RELEASE)/Contents/MacOS/$(APP)"
+	cp "$(MACOS_APP_ICON_PNG)" "$(MACOS_APP_RELEASE)/Contents/Resources/$(notdir $(MACOS_APP_ICON_PNG))"
+	@if [ "$$(uname -s)" = Darwin ]; then \
+		iconset_dir="$(MACOS_APP_RELEASE)/Contents/Resources/$(MACOS_APP_ICON_NAME).iconset"; \
+		rm -rf "$$iconset_dir"; \
+		mkdir -p "$$iconset_dir"; \
+		sips -z 16 16 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_16x16.png" >/dev/null; \
+		sips -z 32 32 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_16x16@2x.png" >/dev/null; \
+		sips -z 32 32 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_32x32.png" >/dev/null; \
+		sips -z 64 64 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_32x32@2x.png" >/dev/null; \
+		sips -z 128 128 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_128x128.png" >/dev/null; \
+		sips -z 256 256 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_128x128@2x.png" >/dev/null; \
+		sips -z 256 256 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_256x256.png" >/dev/null; \
+		sips -z 512 512 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_256x256@2x.png" >/dev/null; \
+		sips -z 512 512 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_512x512.png" >/dev/null; \
+		sips -z 1024 1024 "$(MACOS_APP_ICON_PNG)" --out "$$iconset_dir/icon_512x512@2x.png" >/dev/null; \
+		iconutil -c icns "$$iconset_dir" -o "$(MACOS_APP_RELEASE)/Contents/Resources/$(MACOS_APP_ICON_NAME).icns"; \
+		rm -rf "$$iconset_dir"; \
+	fi
 
 sign-macos-app: build-macos-app | ensure-build-dir
 	@test "$$(uname -s)" = Darwin || (echo "sign-macos-app requires macOS (codesign)"; exit 1)
