@@ -29,7 +29,6 @@ gradle-daemon-jvm.properties
 
 # AI agents
 .claude
-CLAUDE.md
 .codex
 
 # binaries
