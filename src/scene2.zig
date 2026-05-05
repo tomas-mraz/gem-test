@@ -1,4 +1,4 @@
-//! scene2 — game: WASD-controlled triangle. ESC opens the menu.
+//! scene2 — game: WASD-controlled triangle. ESC/M opens the menu.
 const std = @import("std");
 const gem = @import("gem");
 const ash = @import("ash");
@@ -186,6 +186,7 @@ pub const Scene2 = struct {
         return .{
             .digital = &.{
                 .{ .action = action_open_menu, .key = .escape },
+                .{ .action = action_open_menu, .key = .m },
             },
             .axes = &.{
                 .{ .action = action_move_x, .negative = .a, .positive = .d },

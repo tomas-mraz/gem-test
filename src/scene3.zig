@@ -1,4 +1,4 @@
-//! scene3 — menu: idle-spinning triangle. ESC/Space resumes the game,
+//! scene3 — menu: idle-spinning triangle. ESC/M resumes the game,
 //! Enter quits the application.
 const std = @import("std");
 const gem = @import("gem");
@@ -116,8 +116,7 @@ pub const Scene3 = struct {
 
     pub fn update(self: *Scene3, e: *gem.Engine) bool {
         if (e.actions.justPressed(action_quit_game)) {
-            // No event emitted: scene_manager treats `update returning true` with
-            // no pending event as a close request and shuts the host down.
+            e.requestClose();
             return true;
         }
         if (e.actions.justPressed(action_resume_game)) {
@@ -144,7 +143,7 @@ pub const Scene3 = struct {
         return .{
             .digital = &.{
                 .{ .action = action_resume_game, .key = .escape },
-                .{ .action = action_resume_game, .key = .space },
+                .{ .action = action_resume_game, .key = .m },
                 .{ .action = action_quit_game, .key = .enter },
             },
         };

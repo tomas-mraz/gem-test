@@ -184,7 +184,6 @@ pub const Scene1 = struct {
         return .{
             .digital = &.{
                 .{ .action = action_skip_intro, .key = .space },
-                .{ .action = action_skip_intro, .key = .escape },
             },
         };
     }
